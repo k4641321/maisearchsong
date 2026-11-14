@@ -44,7 +44,7 @@ dependencies:
   # 文件选择（导入导出）
   file_picker: ^13.0.0
   # 分享
-  share_plus: ^12.0.2
+  share_plus: ^13.1.0
   # 图片缓存
   cached_network_image: ^3.4.1
   # 应用信息
