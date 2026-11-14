@@ -1,4 +1,4 @@
-# 乌蒙查歌（maisearchsong）
+# 舞萌查歌（maisearchsong）
 
 面向《舞萌 DX》（国服）的查歌工具，Flutter 编写。界面与交互仿照
 [chusearchsong_flutter](https://github.com/k4641321/chusearchsong_flutter)，

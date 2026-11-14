@@ -7,7 +7,7 @@ class AppInfo {
   const AppInfo._();
 
   /// 应用展示名。
-  static const String appName = '乌蒙查歌';
+  static const String appName = '舞萌查歌';
 
   /// 英文名 / 拼音代号。
   static const String appNameEn = 'WumengSearchSong';

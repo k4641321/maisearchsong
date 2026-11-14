@@ -1,5 +1,5 @@
 name: maisearchsong
-description: "乌蒙 maimai 查歌工具 —— 曲库检索、曲绘预览、谱面信息、成绩查询"
+description: "舞萌 maimai 查歌工具 —— 曲库检索、曲绘预览、谱面信息、成绩查询"
 # 防止包被意外发布到 pub.dev
 publish_to: 'none'
 

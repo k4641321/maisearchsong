@@ -103,7 +103,7 @@ class MarkPalette {
 class AppPalette {
   const AppPalette._();
 
-  /// 品牌主色（乌蒙紫粉）。
+  /// 品牌主色（舞萌紫粉）。
   static const Color seed = Color(0xFFFF5FA2);
 
   /// 深色背景。

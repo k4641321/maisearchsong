@@ -14,7 +14,7 @@ Future<void> main() async {
   runApp(const WumengApp());
 }
 
-/// 乌蒙查歌应用根组件。
+/// 舞萌查歌应用根组件。
 class WumengApp extends StatefulWidget {
   const WumengApp({super.key});
 

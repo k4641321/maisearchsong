@@ -107,7 +107,7 @@ class ProxyManager {
           config: _config,
           networkMode: NetworkMode.vpn,
           notification: const NotificationConfig(
-            title: '乌蒙查歌 · 加速线路',
+            title: '舞萌查歌 · 加速线路',
             showTrafficStats: true,
           ),
         ),

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "net.wumeng" "\0"
-            VALUE "FileDescription", "乌蒙查歌" "\0"
+            VALUE "FileDescription", "舞萌查歌" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "maisearchsong" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 net.wumeng. All rights reserved." "\0"
             VALUE "OriginalFilename", "maisearchsong.exe" "\0"
-            VALUE "ProductName", "乌蒙查歌" "\0"
+            VALUE "ProductName", "舞萌查歌" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
