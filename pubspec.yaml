@@ -48,7 +48,7 @@ dependencies:
   # 图片缓存
   cached_network_image: ^3.4.1
   # 应用信息
-  package_info_plus: ^8.3.1
+  package_info_plus: ^8.2.2
   # 图标集
   font_awesome_flutter: ^11.0.0
   # 跑马灯（长曲名滚动）
