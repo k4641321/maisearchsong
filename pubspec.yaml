@@ -42,7 +42,7 @@ dependencies:
   # 网络客户端
   flutter_singbox_client: 1.0.1
   # 文件选择（导入导出）
-  file_picker: ^11.0.2
+  file_picker: ^13.0.0
   # 分享
   share_plus: ^12.0.2
   # 图片缓存
