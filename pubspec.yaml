@@ -1,0 +1,103 @@
+name: maisearchsong
+description: "乌蒙 maimai 查歌工具 —— 曲库检索、曲绘预览、谱面信息、成绩查询"
+# 防止包被意外发布到 pub.dev
+publish_to: 'none'
+
+# 版本号：主版本.次版本.修订号+构建号
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # iOS 风格图标字体
+  cupertino_icons: ^1.0.8
+  # 打开外部链接
+  url_launcher: ^6.3.2
+  # 网络请求
+  http: ^1.6.0
+  # 修改 Android 包名
+  change_app_package_name: ^1.5.0
+  # 音频播放（曲目试听）
+  audioplayers: ^6.8.1
+  # Android 端 URL 打开支持
+  url_launcher_android: ^6.3.29
+  # 应用目录
+  path_provider: ^2.1.5
+  # 函数式工具
+  functionx: ^2.0.1
+  # 图标生成
+  flutter_launcher_icons: ^0.14.4
+  # Material You 取色
+  dynamic_color: ^1.8.1
+  # 时间格式化
+  intl: ^0.20.2
+  # 图表（Rating 趋势 / 成绩分布）
+  fl_chart: ^1.2.0
+  # 内嵌网页（lxns 同步）
+  webview_flutter: ^4.13.1
+  # 网络客户端
+  flutter_singbox_client: 1.0.1
+  # 文件选择（导入导出）
+  file_picker: ^11.0.2
+  # 分享
+  share_plus: ^12.0.2
+  # 图片缓存
+  cached_network_image: ^3.4.1
+  # 应用信息
+  package_info_plus: ^8.3.1
+  # 图标集
+  font_awesome_flutter: ^11.0.0
+  # 跑马灯（长曲名滚动）
+  marquee: ^2.3.0
+  # 地图（机厅分布）
+  flutter_map: ^8.3.1
+  # 定位（附近机厅）
+  geolocator: ^14.0.2
+  # 经纬度
+  latlong2: ^0.9.1
+  # 加密（lxns 开发者 API 签名）
+  crypto: ^3.0.7
+  # 地图聚合标记
+  flutter_map_marker_cluster_plus: ^1.4.2
+  # 异步工具
+  async: ^2.13.1
+  # 取色器
+  flutter_colorpicker: ^1.1.0
+  # 本地数据库（收藏夹 / 曲库缓存）
+  flutter_local_db: ^3.0.6
+  # 图片处理（曲绘合成分享图）
+  image: ^4.12.0
+  # 日志
+  logger_rs: ^2.1.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # 官方推荐 lint 规则集，配置见 analysis_options.yaml
+  flutter_lints: ^6.0.0
+
+flutter:
+
+  # 确保使用 Material 图标字体
+  uses-material-design: true
+
+  assets:
+    - res/icon.png
+    - res/zsm.png
+    - res/background.png
+    - res/maimaiproxy.json
+
+flutter_launcher_icons:
+  image_path: "res/icon.png"
+  android: true
+  ios: true
+  windows:
+    generate: true
+    image_path: "res/icon.png"
+    icon_size: 256

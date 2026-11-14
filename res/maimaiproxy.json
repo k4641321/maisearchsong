@@ -1,0 +1,9 @@
+{
+  "_comment": "代理配置占位文件。填入 http/socks 代理后，应用内的『网络代理』开关会使用它访问 lxns 与游戏资源站。",
+  "enabled": false,
+  "type": "http",
+  "host": "127.0.0.1",
+  "port": 7890,
+  "username": "",
+  "password": ""
+}
