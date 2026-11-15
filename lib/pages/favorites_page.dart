@@ -213,8 +213,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
       final uri = await FilePicker.saveFile(
         dialogTitle: '导出收藏夹',
         fileName: 'maisearchsong_favorites.json',
-        type: FileType.custom,
-        allowedExtensions: ['json'],
         bytes: utf8.encode(text),
       );
       if (uri == null) {

@@ -10,9 +10,11 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  # `_ref/` 存放参考仓库的只读副本，不参与本项目的分析。
+  # `chusearchsong/` 是误放到工作区根的参考仓库副本（另有 `_ref/`），
+  # 均不参与本项目的分析。
   exclude:
     - _ref/**
+    - chusearchsong/**
 
 linter:
   # The lint rules applied to this project can be customized in the

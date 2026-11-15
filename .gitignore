@@ -48,6 +48,7 @@ app.*.map.json
 /_ref/
 /_shot/
 /_nuget/
+/chusearchsong/
 
 # 打包产物（体积大，用 flutter build windows --release 重新生成）
 /dist/

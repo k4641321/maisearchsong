@@ -5,10 +5,14 @@ import '../core/constants.dart';
 import '../core/palette.dart';
 import '../core/rating.dart';
 import '../models/models.dart';
+import 'all_scores_page.dart';
 import 'collection_page.dart';
+import 'friend_battle_page.dart';
+import 'level_progress_page.dart';
 import 'player_page.dart';
 import 'random_song_page.dart';
 import 'rating_calc_page.dart';
+import 'special_b50_page.dart';
 
 /// 工具页：查分、收藏品、计算器与资料表。
 class ToolsPage extends StatelessWidget {
@@ -43,6 +47,30 @@ class ToolsPage extends StatelessWidget {
             title: '吃分建议',
             subtitle: '按单谱 Rating 从低到高排出可提升的谱面',
             onTap: () => _push(context, const PlayerPage(initialTab: 1)),
+          ),
+          _ToolTile(
+            icon: Icons.auto_awesome_motion_rounded,
+            title: '特殊 Best 50',
+            subtitle: 'AP50 / FC50 / 随机 50 / 分类 · 版本 · 曲师 50',
+            onTap: () => _push(context, const SpecialB50Page()),
+          ),
+          _ToolTile(
+            icon: Icons.layers_rounded,
+            title: '等级完成进度',
+            subtitle: '按标级统计已打过的谱面与达成率档位',
+            onTap: () => _push(context, const LevelProgressPage()),
+          ),
+          _ToolTile(
+            icon: Icons.format_list_bulleted_rounded,
+            title: '所有成绩',
+            subtitle: '分页浏览玩家的全部最佳成绩',
+            onTap: () => _push(context, const AllScoresPage()),
+          ),
+          _ToolTile(
+            icon: Icons.sports_kabaddi_rounded,
+            title: '友人对战',
+            subtitle: '对比两位玩家的成绩，逐谱分出胜负',
+            onTap: () => _push(context, const FriendBattlePage()),
           ),
           const _SectionTitle('曲目工具'),
           _ToolTile(

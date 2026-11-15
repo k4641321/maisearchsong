@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,6 +32,7 @@ class _SongInfoPageState extends State<SongInfoPage> {
   SongDifficulty? _selected;
   Score? _best;
   bool _loadingBest = false;
+  List<Score> _history = [];
   PlayerState _playerState = PlayerState.stopped;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -85,7 +87,7 @@ class _SongInfoPageState extends State<SongInfoPage> {
     if (mounted) setState(() {});
   }
 
-  /// 取当前玩家在该谱面的最佳成绩。
+  /// 取当前玩家在该谱面的最佳成绩与成绩历史。
   Future<void> _loadBest() async {
     final friendCode = _state.player?.friendCode;
     final difficulty = _selected;
@@ -103,6 +105,33 @@ class _SongInfoPageState extends State<SongInfoPage> {
       if (mounted) setState(() => _best = null);
     } finally {
       if (mounted) setState(() => _loadingBest = false);
+    }
+    unawaited(_loadHistory());
+  }
+
+  /// 成绩历史（按上传时间倒序），仅用于详情页曲线展示。
+  Future<void> _loadHistory() async {
+    final friendCode = _state.player?.friendCode;
+    final difficulty = _selected;
+    if (friendCode == null || difficulty == null) return;
+    try {
+      final data = await _state.api.fetchScoreHistory(
+        friendCode: friendCode,
+        songId: widget.songId,
+        levelIndex: difficulty.difficulty,
+        type: difficulty.type,
+      );
+      if (!mounted) return;
+      setState(() {
+        _history = [
+          for (final item in data)
+            if (item is Map<String, dynamic>)
+              Score.fromJson(Map<String, dynamic>.from(item)),
+        ];
+      });
+    } catch (_) {
+      // 历史是锦上添花：拉不到就安静地不画曲线。
+      if (mounted) setState(() => _history = []);
     }
   }
 
@@ -282,6 +311,7 @@ class _SongInfoPageState extends State<SongInfoPage> {
                   setState(() {
                     _selected = d;
                     _best = null;
+                    _history = [];
                   });
                   _loadBest();
                 },
@@ -296,6 +326,7 @@ class _SongInfoPageState extends State<SongInfoPage> {
                 best: _best,
                 loadingBest: _loadingBest,
                 hasPlayer: _state.player != null,
+                history: _history,
               ),
             ),
           SliverToBoxAdapter(
@@ -488,6 +519,7 @@ class _ChartPanel extends StatelessWidget {
     required this.best,
     required this.loadingBest,
     required this.hasPlayer,
+    required this.history,
   });
 
   final Song song;
@@ -495,6 +527,9 @@ class _ChartPanel extends StatelessWidget {
   final Score? best;
   final bool loadingBest;
   final bool hasPlayer;
+
+  /// 成绩上传历史（倒序），长度 ≥ 2 时绘制达成率曲线。
+  final List<Score> history;
 
   @override
   Widget build(BuildContext context) {
@@ -629,12 +664,133 @@ class _ChartPanel extends StatelessWidget {
                         style: theme.textTheme.labelSmall,
                       ),
                     ],
+                    if (history.length >= 2) ...[
+                      const SizedBox(height: 14),
+                      _HistoryChart(history: history),
+                    ],
                   ],
                 ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 成绩历史曲线（按上传时间从旧到新排列）。
+///
+/// 数据来自 `/score/history`，本身按 `upload_time` 倒序返回，
+/// 画图前先反转成时间正序。
+class _HistoryChart extends StatelessWidget {
+  const _HistoryChart({required this.history});
+
+  final List<Score> history;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final points = history.reversed.toList();
+    if (points.length < 2) return const SizedBox.shrink();
+    final values = points.map((e) => e.achievements).toList();
+    final minValue = values.reduce((a, b) => a < b ? a : b);
+    final maxValue = values.reduce((a, b) => a > b ? a : b);
+    final padding = ((maxValue - minValue) * 0.25).clamp(0.2, 3).toDouble();
+    final minY = (minValue - padding).clamp(80, 101).toDouble();
+    final maxY = (maxValue + padding).clamp(minY + 0.2, 101).toDouble();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '成绩历史（${points.length} 次记录）',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 180,
+          child: LineChart(
+            LineChartData(
+              minY: minY,
+              maxY: maxY,
+              gridData: const FlGridData(show: true, drawVerticalLine: false),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(),
+                rightTitles: const AxisTitles(),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 44,
+                    interval: (((maxY - minY) / 2).clamp(0.1, 20)).toDouble(),
+                    getTitlesWidget: (value, meta) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Text(
+                        value.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    interval: (points.length / 3).ceilToDouble().clamp(1, 99),
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+                      if (index < 0 || index >= points.length) {
+                        return const SizedBox.shrink();
+                      }
+                      final time = points[index].uploadTime;
+                      final label = time.length >= 10
+                          ? time.substring(5, 10)
+                          : time;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(label, style: const TextStyle(fontSize: 10)),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipItems: (spots) => spots
+                      .map(
+                        (s) => LineTooltipItem(
+                          '${points[s.x.toInt()].achievements.toStringAsFixed(4)}%',
+                          const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: [
+                    for (var i = 0; i < points.length; i++)
+                      FlSpot(i.toDouble(), points[i].achievements),
+                  ],
+                  isCurved: true,
+                  barWidth: 2.5,
+                  dotData: const FlDotData(show: false),
+                  color: theme.colorScheme.primary,
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

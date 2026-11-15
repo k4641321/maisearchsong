@@ -12,12 +12,16 @@ import 'package:logger_rs/logger_rs.dart';
 
 import 'package:maisearchsong/core/app_state.dart';
 import 'package:maisearchsong/models/models.dart';
+import 'package:maisearchsong/pages/all_scores_page.dart';
 import 'package:maisearchsong/pages/collection_page.dart';
 import 'package:maisearchsong/pages/favorites_page.dart';
+import 'package:maisearchsong/pages/friend_battle_page.dart';
+import 'package:maisearchsong/pages/level_progress_page.dart';
 import 'package:maisearchsong/pages/player_page.dart';
 import 'package:maisearchsong/pages/rating_calc_page.dart';
 import 'package:maisearchsong/pages/search_page.dart';
 import 'package:maisearchsong/pages/song_info_page.dart';
+import 'package:maisearchsong/pages/special_b50_page.dart';
 import 'package:maisearchsong/pages/tools_page.dart';
 
 /// 读取仓库里的真实曲库快照。
@@ -106,6 +110,10 @@ void main() {
       '玩家查询',
       'Rating 趋势',
       '吃分建议',
+      '特殊 Best 50',
+      '等级完成进度',
+      '所有成绩',
+      '友人对战',
       '随机歌曲 / 出勤转盘',
       '单曲 Rating 计算器',
       '容错计算',
@@ -148,5 +156,37 @@ void main() {
   testWidgets('收藏品页能打开并渲染', (tester) async {
     await pumpPage(tester, const CollectionPage(type: CollectionType.trophy));
     expect(find.byType(CollectionPage), findsOneWidget);
+  });
+
+  testWidgets('特殊 Best 50 页空态提示可见', (tester) async {
+    await pumpPage(tester, const SpecialB50Page());
+    final texts = allTexts(tester);
+    expect(
+      texts.any((t) => t.contains('输入好友码后生成特殊 B50')),
+      isTrue,
+      reason: '未显示空态引导文案',
+    );
+  });
+
+  testWidgets('所有成绩页空态提示可见', (tester) async {
+    await pumpPage(tester, const AllScoresPage());
+    final texts = allTexts(tester);
+    expect(texts, isNotEmpty);
+  });
+
+  testWidgets('等级完成进度页空态提示可见', (tester) async {
+    await pumpPage(tester, const LevelProgressPage());
+    final texts = allTexts(tester);
+    expect(
+      texts.any((t) => t.contains('输入好友码后统计等级完成进度')),
+      isTrue,
+      reason: '未显示空态引导文案',
+    );
+  });
+
+  testWidgets('友人对战页空态提示可见', (tester) async {
+    await pumpPage(tester, const FriendBattlePage());
+    final texts = allTexts(tester);
+    expect(texts, isNotEmpty);
   });
 }
