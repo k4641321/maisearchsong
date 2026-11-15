@@ -210,25 +210,28 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Future<void> _export() async {
     final text = _state.exportFavorites();
     try {
-      final path = await FilePicker.saveFile(
+      final uri = await FilePicker.saveFile(
         dialogTitle: '导出收藏夹',
         fileName: 'maisearchsong_favorites.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
         bytes: utf8.encode(text),
       );
-      if (path == null) {
+      if (uri == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('已取消导出')));
         return;
       }
-      await File(path).writeAsString(text);
+      // file_picker v13 在传入 bytes 时会自动写入文件，
+      // 返回的 uri 即用户选择的目标位置，无需再手动 writeAsString。
       if (!mounted) return;
+      final displayPath =
+          uri.isScheme('file') ? uri.toFilePath() : uri.toString();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('已导出到 $path')));
+      ).showSnackBar(SnackBar(content: Text('已导出到 $displayPath')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -239,12 +242,13 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   Future<void> _import() async {
     try {
-      final picked = await FilePicker.pickFiles(
+      final files = await FilePicker.pickFiles(
         dialogTitle: '导入收藏夹',
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
-      final path = picked?.files.single.path;
+      if (files.isEmpty) return; // 用户取消时返回空列表
+      final path = files.first.path;
       if (path == null) return;
       final text = await File(path).readAsString();
       final count = await _state.importFavorites(text);
