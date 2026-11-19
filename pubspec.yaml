@@ -4,7 +4,7 @@ description: "舞萌 maimai 查歌工具 —— 曲库检索、曲绘预览、�
 publish_to: 'none'
 
 # 版本号：主版本.次版本.修订号+构建号
-version: 1.0.0+1
+version: 1.1.0
 
 environment:
   sdk: ^3.11.1
@@ -17,8 +17,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   # 打开外部链接
   url_launcher: ^6.3.2
-  # 网络请求
+  # 网络请求 
   http: ^1.6.0
+  # 跨平台文件分享与路径处理
+  cross_file: ^0.3.5+5
+  path: ^1.9.1
   # 修改 Android 包名
   change_app_package_name: ^1.5.0
   # 音频播放（曲目试听）
@@ -73,6 +76,7 @@ dependencies:
   image: ^4.12.0
   # 日志
   logger_rs: ^2.1.1
+
 
 
 dev_dependencies:

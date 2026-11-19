@@ -7,7 +7,9 @@ import '../core/constants.dart';
 import '../core/palette.dart';
 import '../core/rating.dart';
 import '../models/models.dart';
+import '../services/b50_image_renderer.dart';
 import '../widgets/common.dart';
+import 'b50_image_page.dart';
 import 'song_info_page.dart';
 
 /// 特殊 Best 50 页：基于玩家全部成绩生成 AP50 / FC50 / 随机 50 / 分类 50 等榜单。
@@ -54,7 +56,6 @@ class _Entry {
 
 class _SpecialB50PageState extends State<SpecialB50Page> {
   final AppState _state = AppState.instance;
-  final TextEditingController _code = TextEditingController();
   final math.Random _random = math.Random();
 
   List<SimpleScore> _scores = const [];
@@ -73,7 +74,6 @@ class _SpecialB50PageState extends State<SpecialB50Page> {
   @override
   void initState() {
     super.initState();
-    _code.text = _state.player?.friendCode.toString() ?? '';
     if (_state.player != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _query());
     }
@@ -81,25 +81,17 @@ class _SpecialB50PageState extends State<SpecialB50Page> {
 
   @override
   void dispose() {
-    _code.dispose();
     super.dispose();
   }
 
   Future<void> _query() async {
-    final code = int.tryParse(_code.text.trim());
-    if (code == null || code <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入正确的好友码')));
-      return;
-    }
     FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final raw = await _state.api.fetchAllScores(code);
+      final raw = await _state.api.fetchAllScores();
       if (!mounted) return;
       setState(() {
         _scores = raw
@@ -236,13 +228,68 @@ class _SpecialB50PageState extends State<SpecialB50Page> {
     return entries.map((e) => e.key).toList();
   }
 
+  /// 使用当前筛选结果和随机顺序生成图片。
+  void _generateImage() {
+    final entries = _entries();
+    if (entries.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('当前榜单没有可生成图片的成绩')));
+      return;
+    }
+    final filter = switch (_type) {
+      _B50Type.genre => '分类：$_genre',
+      _B50Type.version => '版本：$_version',
+      _B50Type.artist => '曲师：$_artist',
+      _B50Type.random => '当前随机抽签顺序',
+      _ => _type.hint,
+    };
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => B50ImagePage(
+          document: B50ImageDocument(
+            title: _type.label,
+            subtitle: '$filter · ${entries.length} 条成绩',
+            player: _state.player,
+            estimatesRating: true,
+            sections: [
+              B50ImageSection(
+                title: _type.label,
+                total: entries.fold<int>(0, (sum, entry) => sum + entry.rating),
+                entries: [
+                  for (final entry in entries)
+                    B50ImageEntry.fromSimpleScore(
+                      entry.score,
+                      difficulty: entry.difficulty,
+                      rating: entry.rating,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final entries = _scores.isEmpty ? const <_Entry>[] : _entries();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('特殊 Best 50')),
+      appBar: AppBar(
+        title: const Text('特殊 Best 50'),
+        actions: [
+          if (_scores.isNotEmpty)
+            IconButton(
+              key: const Key('special-b50-image-button'),
+              tooltip: '生成当前特殊 B50 图片',
+              icon: const Icon(Icons.photo_library_rounded),
+              onPressed: _generateImage,
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -250,22 +297,22 @@ class _SpecialB50PageState extends State<SpecialB50Page> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _code,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _query(),
-                    decoration: const InputDecoration(
-                      hintText: '输入好友码 / Friend Code',
-                      prefixIcon: Icon(Icons.pin_rounded),
+                  child: Text(
+                    _state.player != null
+                        ? '已绑定 ${_state.player!.name}（个人 Token）'
+                        : '使用个人 Token 拉取自己的成绩',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: _loading ? null : _query,
-                  icon: const Icon(Icons.search_rounded, size: 18),
-                  label: const Text('查询'),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('刷新'),
                 ),
               ],
             ),
@@ -359,16 +406,14 @@ class _SpecialB50PageState extends State<SpecialB50Page> {
               onRetry: _query,
               empty: _scores.isEmpty || entries.isEmpty,
               emptyText: _scores.isEmpty
-                  ? (_queried ? '该玩家还没有成绩' : '输入好友码后生成特殊 B50')
+                  ? (_queried ? '你还没有成绩' : '点击刷新生成特殊 B50')
                   : '该筛选条件下没有成绩',
               emptyIcon: Icons.auto_awesome_motion_rounded,
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 30),
                 itemCount: entries.length,
-                itemBuilder: (context, index) => _EntryTile(
-                  entry: entries[index],
-                  rank: index + 1,
-                ),
+                itemBuilder: (context, index) =>
+                    _EntryTile(entry: entries[index], rank: index + 1),
               ),
             ),
           ),
@@ -431,7 +476,8 @@ class _EntryTile extends StatelessWidget {
                       runSpacing: 4,
                       children: [
                         RateBadge(
-                          label: '${score.type.label} ${score.difficulty.label}',
+                          label:
+                              '${score.type.label} ${score.difficulty.label}',
                           color: AppPalette.chartTag(
                             score.type,
                             score.levelIndex,
@@ -439,10 +485,9 @@ class _EntryTile extends StatelessWidget {
                         ),
                         if (entry.difficulty != null)
                           RateBadge(
-                            label: '定数 '
-                                '${RatingCalculator.constantOf(
-                                  entry.difficulty!,
-                                ).toStringAsFixed(1)}',
+                            label:
+                                '定数 '
+                                '${RatingCalculator.constantOf(entry.difficulty!).toStringAsFixed(1)}',
                             color: theme.colorScheme.secondary,
                           ),
                       ],
@@ -496,18 +541,11 @@ class _SelectorRow extends StatelessWidget {
             final text = textEditingValue.text;
             if (text.isEmpty) return const Iterable<String>.empty();
             return options
-                .where(
-                  (o) => o.toLowerCase().contains(text.toLowerCase()),
-                )
+                .where((o) => o.toLowerCase().contains(text.toLowerCase()))
                 .take(12);
           },
           onSelected: onChanged,
-          fieldViewBuilder: (
-            context,
-            controller,
-            focusNode,
-            onFieldSubmitted,
-          ) {
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return TextField(
               controller: controller,
               focusNode: focusNode,
@@ -550,3 +588,4 @@ class _SelectorRow extends StatelessWidget {
     );
   }
 }
+

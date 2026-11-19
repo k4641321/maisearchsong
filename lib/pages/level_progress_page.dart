@@ -59,7 +59,6 @@ class _LevelKey implements Comparable<_LevelKey> {
 
 class _LevelProgressPageState extends State<LevelProgressPage> {
   final AppState _state = AppState.instance;
-  final TextEditingController _code = TextEditingController();
 
   List<SimpleScore> _scores = const [];
   bool _loading = false;
@@ -72,7 +71,6 @@ class _LevelProgressPageState extends State<LevelProgressPage> {
   @override
   void initState() {
     super.initState();
-    _code.text = _state.player?.friendCode.toString() ?? '';
     if (_state.player != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _query());
     }
@@ -80,25 +78,17 @@ class _LevelProgressPageState extends State<LevelProgressPage> {
 
   @override
   void dispose() {
-    _code.dispose();
     super.dispose();
   }
 
   Future<void> _query() async {
-    final code = int.tryParse(_code.text.trim());
-    if (code == null || code <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入正确的好友码')));
-      return;
-    }
     FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final raw = await _state.api.fetchAllScores(code);
+      final raw = await _state.api.fetchAllScores();
       if (!mounted) return;
       setState(() {
         _scores = raw
@@ -161,22 +151,22 @@ class _LevelProgressPageState extends State<LevelProgressPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _code,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _query(),
-                    decoration: const InputDecoration(
-                      hintText: '输入好友码 / Friend Code',
-                      prefixIcon: Icon(Icons.pin_rounded),
+                  child: Text(
+                    _state.player != null
+                        ? '已绑定 ${_state.player!.name}（个人 Token）'
+                        : '使用个人 Token 拉取自己的成绩',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: _loading ? null : _query,
-                  icon: const Icon(Icons.search_rounded, size: 18),
-                  label: const Text('查询'),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('刷新'),
                 ),
               ],
             ),
@@ -189,8 +179,8 @@ class _LevelProgressPageState extends State<LevelProgressPage> {
               onRetry: _query,
               empty: _scores.isEmpty,
               emptyText: _queried
-                  ? '该玩家还没有成绩'
-                  : '输入好友码后统计等级完成进度（曲库谱面 + 玩家成绩）',
+                  ? '你还没有成绩'
+                  : '点击刷新统计等级完成进度（曲库谱面 + 玩家成绩）',
               emptyIcon: Icons.stairs_rounded,
               child: Builder(
                 builder: (context) {

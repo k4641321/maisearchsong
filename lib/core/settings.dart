@@ -30,7 +30,7 @@ class AppSettings {
   /// 品牌主色。
   final int seedColorValue;
 
-  /// lxns 开发者 API Token。
+  /// lxns 个人 API Token（账号详情页生成）。
   final String userToken;
 
   /// 默认曲库版本号。

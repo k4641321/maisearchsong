@@ -7,7 +7,6 @@ import '../core/rating.dart';
 import '../models/models.dart';
 import 'all_scores_page.dart';
 import 'collection_page.dart';
-import 'friend_battle_page.dart';
 import 'level_progress_page.dart';
 import 'player_page.dart';
 import 'random_song_page.dart';
@@ -33,7 +32,7 @@ class ToolsPage extends StatelessWidget {
           _ToolTile(
             icon: Icons.person_search_rounded,
             title: '玩家查询',
-            subtitle: '输入好友码，查看 Rating、Best 50 与成绩曲线',
+            subtitle: '使用个人 Token 查看 Rating、Best 50 与成绩曲线',
             onTap: () => _push(context, const PlayerPage()),
           ),
           _ToolTile(
@@ -63,14 +62,8 @@ class ToolsPage extends StatelessWidget {
           _ToolTile(
             icon: Icons.format_list_bulleted_rounded,
             title: '所有成绩',
-            subtitle: '分页浏览玩家的全部最佳成绩',
+            subtitle: '分页浏览自己的全部最佳成绩',
             onTap: () => _push(context, const AllScoresPage()),
-          ),
-          _ToolTile(
-            icon: Icons.sports_kabaddi_rounded,
-            title: '友人对战',
-            subtitle: '对比两位玩家的成绩，逐谱分出胜负',
-            onTap: () => _push(context, const FriendBattlePage()),
           ),
           const _SectionTitle('曲目工具'),
           _ToolTile(
@@ -207,7 +200,7 @@ class _PlayerBanner extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       p == null
-                          ? '点击输入好友码查询国服成绩'
+                          ? '设置个人 Token 后查询自己的成绩'
                           : 'RATING ${p.rating}　·　好友码 ${p.friendCode}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,

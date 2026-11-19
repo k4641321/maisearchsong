@@ -287,18 +287,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 拉取玩家信息与 Best 50。
-  Future<void> loadPlayer(int friendCode) async {
+  /// 拉取玩家信息与 Best 50（个人 Token 所属玩家）。
+  Future<void> loadPlayer() async {
     loading = true;
     error = null;
     notifyListeners();
     try {
-      final rawPlayer = await api.fetchPlayer(friendCode);
-      final rawBests = await api.fetchBests(friendCode);
+      final rawPlayer = await api.fetchPlayer();
+      final rawBests = await api.fetchBests();
       player = Player.fromJson(rawPlayer);
       bests = BestScores.fromJson(rawBests);
       try {
-        final rawTrend = await api.fetchRatingTrend(friendCode);
+        final rawTrend = await api.fetchRatingTrend();
         trend = rawTrend
             .whereType<Map>()
             .map((e) => RatingTrend.fromJson(Map<String, dynamic>.from(e)))
@@ -347,12 +347,12 @@ class AppState extends ChangeNotifier {
   /// 已缓存的收藏品数量（未加载时为 0）。
   int collectionCount(String type) => collections[type]?.length ?? 0;
 
-  /// 拉取玩家全部成绩。
-  Future<void> loadAllScores(int friendCode) async {
+  /// 拉取玩家全部成绩（个人 Token 所属玩家）。
+  Future<void> loadAllScores() async {
     loading = true;
     notifyListeners();
     try {
-      final raw = await api.fetchAllScores(friendCode);
+      final raw = await api.fetchAllScores();
       allScores = raw
           .whereType<Map>()
           .map((e) => SimpleScore.fromJson(Map<String, dynamic>.from(e)))

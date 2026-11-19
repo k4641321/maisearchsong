@@ -114,16 +114,28 @@ class _SettingsTabPageState extends State<SettingsTabPage> {
           ),
           ListTile(
             leading: const Icon(Icons.format_size_rounded),
-            title: const Text('字号缩放'),
-            subtitle: Slider(
-              value: settings.fontScale,
-              min: 0.85,
-              max: 1.3,
-              divisions: 9,
-              label: settings.fontScale.toStringAsFixed(2),
-              onChanged: (value) => _state.updateSettings(
-                settings.copyWith(fontScale: value),
-              ),
+            // title 下的 Column 不会触发 ListTile 的 subtitle 基线测量。
+            // 局部 Overlay 避免游离语义节点引发 Flutter 3.44 Windows
+            // 无障碍桥崩溃，参见 flutter/flutter#190357。
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('字号缩放'),
+                Overlay.wrap(
+                  alwaysSizeToContent: true,
+                  clipBehavior: Clip.none,
+                  child: Slider(
+                    value: settings.fontScale,
+                    min: 0.85,
+                    max: 1.3,
+                    divisions: 9,
+                    label: settings.fontScale.toStringAsFixed(2),
+                    onChanged: (value) => _state.updateSettings(
+                      settings.copyWith(fontScale: value),
+                    ),
+                  ),
+                ),
+              ],
             ),
             trailing: Text('${(settings.fontScale * 100).round()}%'),
           ),
@@ -166,9 +178,9 @@ class _SettingsTabPageState extends State<SettingsTabPage> {
           ),
           ListTile(
             leading: const Icon(Icons.key_rounded),
-            title: const Text('开发者 Token'),
+            title: const Text('个人 Token'),
             subtitle: Text(
-              settings.userToken.isEmpty ? '未设置（仅影响需鉴权的接口）' : '已设置',
+              settings.userToken.isEmpty ? '未设置（查询自己成绩时需要）' : '已设置',
             ),
             trailing: const Icon(Icons.edit_rounded, size: 18),
             onTap: _editToken,
@@ -303,13 +315,27 @@ class _SettingsTabPageState extends State<SettingsTabPage> {
     final value = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('开发者 Token'),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: '在落雪开发者页面申请的 API Token',
-          ),
+        title: const Text('个人 Token'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: '在落雪账号详情页生成的个人 API Token',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('前往落雪账号详情页'),
+              onPressed: () => launchUrl(
+                Uri.parse('https://maimai.lxns.net/user/profile'),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(

@@ -10,19 +10,20 @@ import '../core/constants.dart';
 import '../core/palette.dart';
 import '../core/rating.dart';
 import '../models/models.dart';
+import '../services/b50_image_renderer.dart';
 import '../widgets/common.dart';
 import '../widgets/song_widgets.dart';
+import 'b50_image_page.dart';
 import 'song_info_page.dart';
 
 /// 玩家查询页：概览 / 吃分建议 / Rating 趋势。
+///
+/// 使用个人 Token 查询 Token 所属玩家自己的数据。
 class PlayerPage extends StatefulWidget {
-  const PlayerPage({super.key, this.initialTab = 0, this.friendCode});
+  const PlayerPage({super.key, this.initialTab = 0});
 
   /// 初始标签页。
   final int initialTab;
-
-  /// 预填的好友码。
-  final int? friendCode;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -36,17 +37,14 @@ class _PlayerPageState extends State<PlayerPage>
     initialIndex: widget.initialTab,
     vsync: this,
   );
-  late final TextEditingController _code = TextEditingController(
-    text: widget.friendCode?.toString() ??
-        _state.player?.friendCode.toString() ??
-        '',
-  );
 
   @override
   void initState() {
     super.initState();
     _state.addListener(_onChanged);
-    if (widget.friendCode != null && _state.player?.friendCode != widget.friendCode) {
+    // 已设置个人 Token 且未加载过玩家时自动拉一次。
+    if (_state.player == null &&
+        (_state.settings.userToken?.trim().isNotEmpty ?? false)) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _query());
     }
   }
@@ -55,7 +53,6 @@ class _PlayerPageState extends State<PlayerPage>
   void dispose() {
     _state.removeListener(_onChanged);
     _tabs.dispose();
-    _code.dispose();
     super.dispose();
   }
 
@@ -64,15 +61,7 @@ class _PlayerPageState extends State<PlayerPage>
   }
 
   Future<void> _query() async {
-    final code = int.tryParse(_code.text.trim());
-    if (code == null || code <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入正确的好友码')));
-      return;
-    }
-    FocusScope.of(context).unfocus();
-    await _state.loadPlayer(code);
+    await _state.loadPlayer();
     if (!mounted) return;
     final error = _state.error;
     if (error != null) {
@@ -91,10 +80,38 @@ class _PlayerPageState extends State<PlayerPage>
         actions: [
           if (player != null)
             IconButton(
+              key: const Key('regular-b50-image-button'),
+              tooltip: '生成 Best 50 图片',
+              icon: const Icon(Icons.photo_library_rounded),
+              onPressed: () {
+                final bests = _state.bests;
+                if (bests == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('请先加载 Best 50 数据')),
+                  );
+                  return;
+                }
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => B50ImagePage(
+                      document: B50ImageDocument.regular(
+                        bests: bests,
+                        player: player,
+                        songById: _state.songById,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          if (player != null)
+            IconButton(
               tooltip: '在落雪查看',
               icon: const Icon(Icons.open_in_new_rounded),
               onPressed: () => launchUrl(
-                Uri.parse('${AppInfo.lxnsWeb}/maimai/player/${player.friendCode}'),
+                Uri.parse(
+                  '${AppInfo.lxnsWeb}/maimai/player/${player.friendCode}',
+                ),
                 mode: LaunchMode.externalApplication,
               ),
             ),
@@ -115,22 +132,22 @@ class _PlayerPageState extends State<PlayerPage>
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _code,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _query(),
-                    decoration: const InputDecoration(
-                      hintText: '输入好友码 / Friend Code',
-                      prefixIcon: Icon(Icons.pin_rounded),
+                  child: Text(
+                    _state.player != null
+                        ? '已绑定 ${_state.player!.name}（个人 Token）'
+                        : '使用个人 Token 查询自己的成绩',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: _state.loading ? null : _query,
-                  icon: const Icon(Icons.search_rounded, size: 18),
-                  label: const Text('查询'),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('刷新'),
                 ),
               ],
             ),
@@ -167,8 +184,8 @@ class _OverviewTab extends StatelessWidget {
         error: state.error,
         empty: true,
         emptyIcon: Icons.person_search_rounded,
-        emptyText: '输入好友码后查询国服成绩',
-        onRetry: () => state.loadPlayer(int.tryParse('') ?? 0),
+        emptyText: '设置个人 Token 后查询自己的成绩',
+        onRetry: () => state.loadPlayer(),
         child: const SizedBox.shrink(),
       );
     }
@@ -310,10 +327,7 @@ class _Chip extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        '$label $value',
-        style: theme.textTheme.labelSmall,
-      ),
+      child: Text('$label $value', style: theme.textTheme.labelSmall),
     );
   }
 }
@@ -357,9 +371,9 @@ class _ScoreRow extends StatelessWidget {
       score: score,
       song: song,
       rank: rank,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => SongInfoPage(songId: score.id)),
-      ),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => SongInfoPage(songId: score.id))),
     );
   }
 }
@@ -504,9 +518,7 @@ class _TrendTab extends StatelessWidget {
       );
     }
 
-    final points = trend.length > 40
-        ? trend.sublist(trend.length - 40)
-        : trend;
+    final points = trend.length > 40 ? trend.sublist(trend.length - 40) : trend;
     final values = points.map((e) => e.total.toDouble()).toList();
     final minValue = values.reduce((a, b) => a < b ? a : b);
     final maxValue = values.reduce((a, b) => a > b ? a : b);
@@ -608,3 +620,4 @@ class _TrendTab extends StatelessWidget {
     );
   }
 }
+

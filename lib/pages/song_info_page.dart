@@ -89,13 +89,11 @@ class _SongInfoPageState extends State<SongInfoPage> {
 
   /// 取当前玩家在该谱面的最佳成绩与成绩历史。
   Future<void> _loadBest() async {
-    final friendCode = _state.player?.friendCode;
     final difficulty = _selected;
-    if (friendCode == null || difficulty == null) return;
+    if (_state.player == null || difficulty == null) return;
     setState(() => _loadingBest = true);
     try {
       final data = await _state.api.fetchSongBest(
-        friendCode: friendCode,
         songId: widget.songId,
         levelIndex: difficulty.difficulty,
         type: difficulty.type,
@@ -111,12 +109,10 @@ class _SongInfoPageState extends State<SongInfoPage> {
 
   /// 成绩历史（按上传时间倒序），仅用于详情页曲线展示。
   Future<void> _loadHistory() async {
-    final friendCode = _state.player?.friendCode;
     final difficulty = _selected;
-    if (friendCode == null || difficulty == null) return;
+    if (_state.player == null || difficulty == null) return;
     try {
       final data = await _state.api.fetchScoreHistory(
-        friendCode: friendCode,
         songId: widget.songId,
         levelIndex: difficulty.difficulty,
         type: difficulty.type,
@@ -623,7 +619,7 @@ class _ChartPanel extends StatelessWidget {
               const SizedBox(height: 8),
               if (!hasPlayer)
                 Text(
-                  '在「工具 → 玩家查询」中绑定落雪 ID 后可在此查看成绩',
+                  '在「工具 → 玩家查询」中查询一次成绩后（需已设置个人 Token），可在此查看成绩',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
